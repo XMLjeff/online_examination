@@ -103,13 +103,13 @@ public class PaperController {
 
             //删除试卷对应的试题
             examinationQuestionsService.remove(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
-                    .in(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperId));
+                    .in(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperId + ""));
 
             //更新的试题
             List<ExaminationQuestionsPO> list = new ArrayList<>();
 
             List<ExaminationQuestionsPO> examinationQuestionsPOS = examinationQuestionsService.list(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
-                    .like(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperId));
+                    .like(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperId + ""));
 
             if (!CollectionUtils.isEmpty(examinationQuestionsPOS)) {
                 //去除一个试题多个试卷中对应的试卷id

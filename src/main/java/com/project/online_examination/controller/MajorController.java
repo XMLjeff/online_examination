@@ -90,7 +90,7 @@ public class MajorController {
             //删除专业信息
             majorService.removeById(majorId);
 
-            List<CoursePO> coursePOS = courseService.list(Wrappers.lambdaQuery(CoursePO.class).eq(CoursePO::getMajorIds, majorId));
+            List<CoursePO> coursePOS = courseService.list(Wrappers.lambdaQuery(CoursePO.class).eq(CoursePO::getMajorIds, majorId+""));
             if (!CollectionUtils.isEmpty(coursePOS)) {
                 List<Long> courseIds = coursePOS.stream().map(t -> t.getCourseId()).collect(Collectors.toList());
                 //删除课程信息
@@ -111,20 +111,22 @@ public class MajorController {
                     List<Long> examinationPaperIds = examinationPaperPOS.stream()
                             .map(t -> t.getExaminationPaperId()).collect(Collectors.toList());
 
+                    List<String> examinationPaperIdList = examinationPaperIds.stream().map(t -> t + "").collect(Collectors.toList());
+
                     //删除课程对应的试卷
                     examinationPaperService.remove(Wrappers.lambdaQuery(ExaminationPaperPO.class)
                             .in(ExaminationPaperPO::getCourseId, courseIds));
 
                     //删除试卷对应的试题
                     examinationQuestionsService.remove(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
-                            .in(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperIds));
+                            .in(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperIdList));
 
                     //更新的试题
                     List<ExaminationQuestionsPO> list = new ArrayList<>();
 
                     for (Long examinationPaperId : examinationPaperIds) {
                         List<ExaminationQuestionsPO> examinationQuestionsPOS = examinationQuestionsService.list(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
-                                .like(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperId));
+                                .like(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperId + ""));
                         if (!CollectionUtils.isEmpty(examinationQuestionsPOS)) {
                             //去除一个试题多个试卷中对应的试卷id
                             examinationQuestionsPOS.forEach(v -> {
@@ -142,7 +144,7 @@ public class MajorController {
                 }
             }
 
-            coursePOS = courseService.list(Wrappers.lambdaQuery(CoursePO.class).like(CoursePO::getMajorIds, majorId));
+            coursePOS = courseService.list(Wrappers.lambdaQuery(CoursePO.class).like(CoursePO::getMajorIds, majorId + ""));
             if (!CollectionUtils.isEmpty(coursePOS)) {
                 //去除一个课程多个专业中对应的专业id
                 coursePOS.forEach(t -> {

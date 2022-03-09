@@ -104,20 +104,22 @@ public class CourseController {
                 List<Long> examinationPaperIds = examinationPaperPOS.stream()
                         .map(t -> t.getExaminationPaperId()).collect(Collectors.toList());
 
+                List<String> examinationPaperIdList = examinationPaperIds.stream().map(t -> t + "").collect(Collectors.toList());
+
                 //删除课程对应的试卷
                 examinationPaperService.remove(Wrappers.lambdaQuery(ExaminationPaperPO.class)
                         .eq(ExaminationPaperPO::getCourseId, courseId));
 
                 //删除试卷对应的试题
                 examinationQuestionsService.remove(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
-                        .in(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperIds));
+                        .in(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperIdList));
 
                 //更新的试题
                 List<ExaminationQuestionsPO> list = new ArrayList<>();
 
                 for (Long examinationPaperId : examinationPaperIds) {
                     List<ExaminationQuestionsPO> examinationQuestionsPOS = examinationQuestionsService.list(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
-                            .like(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperId));
+                            .like(ExaminationQuestionsPO::getExaminationPaperIds, examinationPaperId + ""));
                     if (!CollectionUtils.isEmpty(examinationQuestionsPOS)) {
                         //去除一个试题多个试卷中对应的试卷id
                         examinationQuestionsPOS.forEach(v -> {
