@@ -125,7 +125,7 @@ public class CourseController {
                         examinationQuestionsPOS.forEach(v -> {
                             String[] paperIds = v.getExaminationPaperIds().split(",");
                             List<String> paperIdList = Arrays.asList(paperIds);
-                            paperIdList.remove(examinationPaperId);
+                            paperIdList.remove(String.valueOf(examinationPaperId));
                             String paperIdss = paperIdList.stream().collect(Collectors.joining(","));
                             v.setExaminationPaperIds(paperIdss);
                         });

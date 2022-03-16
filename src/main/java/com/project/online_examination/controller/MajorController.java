@@ -90,7 +90,7 @@ public class MajorController {
             //删除专业信息
             majorService.removeById(majorId);
 
-            List<CoursePO> coursePOS = courseService.list(Wrappers.lambdaQuery(CoursePO.class).eq(CoursePO::getMajorIds, majorId+""));
+            List<CoursePO> coursePOS = courseService.list(Wrappers.lambdaQuery(CoursePO.class).eq(CoursePO::getMajorIds, majorId + ""));
             if (!CollectionUtils.isEmpty(coursePOS)) {
                 List<Long> courseIds = coursePOS.stream().map(t -> t.getCourseId()).collect(Collectors.toList());
                 //删除课程信息
@@ -132,7 +132,7 @@ public class MajorController {
                             examinationQuestionsPOS.forEach(v -> {
                                 String[] paperIds = v.getExaminationPaperIds().split(",");
                                 List<String> paperIdList = Arrays.asList(paperIds);
-                                paperIdList.remove(examinationPaperId);
+                                paperIdList.remove(String.valueOf(examinationPaperId));
                                 String paperIdss = paperIdList.stream().collect(Collectors.joining(","));
                                 v.setExaminationPaperIds(paperIdss);
                             });
@@ -150,7 +150,7 @@ public class MajorController {
                 coursePOS.forEach(t -> {
                     String[] majorIds = t.getMajorIds().split(",");
                     List<String> majorIdList = Arrays.asList(majorIds);
-                    majorIdList.remove(majorId);
+                    majorIdList.remove(String.valueOf(majorId));
                     String majorIdss = majorIdList.stream().collect(Collectors.joining(","));
                     t.setMajorIds(majorIdss);
                 });

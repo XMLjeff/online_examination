@@ -118,7 +118,7 @@ public class PaperController {
                 examinationQuestionsPOS.forEach(v -> {
                     String[] paperIds = v.getExaminationPaperIds().split(",");
                     List<String> paperIdList = Arrays.asList(paperIds);
-                    paperIdList.remove(examinationPaperId);
+                    paperIdList.remove(String.valueOf(examinationPaperId));
                     String paperIdss = paperIdList.stream().collect(Collectors.joining(","));
                     v.setExaminationPaperIds(paperIdss);
                 });
@@ -148,6 +148,7 @@ public class PaperController {
             ExaminationPaperVO examinationPaperVO = new ExaminationPaperVO();
             examinationPaperVO.setExaminationPaperId(t.getExaminationPaperId());
             examinationPaperVO.setExaminationPaperName(t.getExaminationPaperName());
+            examinationPaperVO.setCourseId(t.getCourseId());
             String majorIds = courseMap.get(t.getCourseId());
             String[] split = majorIds.split(",");
             List<String> list = new ArrayList<>();
