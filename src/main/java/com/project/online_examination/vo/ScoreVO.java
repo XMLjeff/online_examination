@@ -22,4 +22,6 @@ public class ScoreVO extends ExamineeScorePO implements Serializable {
     private String courseName;
     @ApiModelProperty(value = "试卷名称")
     private String paperName;
+    @ApiModelProperty(value = "专业名称")
+    private String majorsName;
 }

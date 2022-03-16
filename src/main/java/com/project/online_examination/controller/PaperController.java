@@ -7,11 +7,9 @@ import com.project.online_examination.constant.Constant;
 import com.project.online_examination.dto.PaperDTO;
 import com.project.online_examination.enums.MessageEnum;
 import com.project.online_examination.pojo.*;
-import com.project.online_examination.service.IExaminationPaperService;
-import com.project.online_examination.service.IExaminationQuestionsService;
-import com.project.online_examination.service.IExamineeExaminationPaperService;
-import com.project.online_examination.service.IExamineeScoreService;
+import com.project.online_examination.service.*;
 import com.project.online_examination.utils.UploadFile;
+import com.project.online_examination.vo.ExaminationPaperVO;
 import com.project.online_examination.vo.PageInfoVO;
 import com.project.online_examination.vo.ResultVO;
 import io.swagger.annotations.Api;
@@ -61,6 +59,10 @@ public class PaperController {
     private IExamineeScoreService examineeScoreService;
     @Autowired
     private IExaminationQuestionsService examinationQuestionsService;
+    @Autowired
+    private ICourseService courseService;
+    @Autowired
+    private IMajorService majorService;
 
     @ApiOperation(value = "新增试卷")
     @PostMapping("insertPaper")
@@ -131,7 +133,7 @@ public class PaperController {
     @ApiOperation(value = "查询试卷")
     @PostMapping("queryPaper")
     @ApiOperationSupport(includeParameters = {"dto.examinationPaperName", "dto.courseId", "dto.pageNum", "dto.pageSize"})
-    public ResultVO<PageInfoVO<ExaminationPaperPO>> queryPaper(@RequestBody PaperDTO dto) {
+    public ResultVO<PageInfoVO<ExaminationPaperVO>> queryPaper(@RequestBody PaperDTO dto) {
 
         Page<ExaminationPaperPO> page = examinationPaperService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), Wrappers.lambdaQuery(ExaminationPaperPO.class)
                 .like(!StringUtils.isEmpty(dto.getExaminationPaperName()), ExaminationPaperPO::getExaminationPaperName, dto.getExaminationPaperName())
@@ -139,7 +141,25 @@ public class PaperController {
 
         List<ExaminationPaperPO> examinationPaperPOS = page.getRecords();
 
-        return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), examinationPaperPOS));
+        Map<Long, String> courseMap = courseService.list().stream().collect(Collectors.toMap(CoursePO::getCourseId, CoursePO::getMajorIds));
+        Map<Long, String> majorMap = majorService.list().stream().collect(Collectors.toMap(MajorPO::getMajorId, MajorPO::getMajorName));
+
+        List<ExaminationPaperVO> collect = examinationPaperPOS.stream().map(t -> {
+            ExaminationPaperVO examinationPaperVO = new ExaminationPaperVO();
+            examinationPaperVO.setExaminationPaperId(t.getExaminationPaperId());
+            examinationPaperVO.setExaminationPaperName(t.getExaminationPaperName());
+            String majorIds = courseMap.get(t.getCourseId());
+            String[] split = majorIds.split(",");
+            List<String> list = new ArrayList<>();
+            for (String s : split) {
+                String majorName = majorMap.get(Long.valueOf(s));
+                list.add(majorName);
+            }
+            examinationPaperVO.setMajorsName(list.stream().collect(Collectors.joining(",")));
+            return examinationPaperVO;
+        }).collect(Collectors.toList());
+
+        return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), collect));
     }
 
     @ApiOperation(value = "修改试卷")

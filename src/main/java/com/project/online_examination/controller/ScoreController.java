@@ -8,6 +8,7 @@ import com.project.online_examination.dto.ScoreDTO;
 import com.project.online_examination.mapstruct.ScoreConverter;
 import com.project.online_examination.pojo.*;
 import com.project.online_examination.service.*;
+import com.project.online_examination.vo.ExaminationPaperVO;
 import com.project.online_examination.vo.PageInfoVO;
 import com.project.online_examination.vo.ResultVO;
 import com.project.online_examination.vo.ScoreVO;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,6 +51,8 @@ public class ScoreController {
     private ICourseService courseService;
     @Autowired
     private IExaminationPaperService examinationPaperService;
+    @Autowired
+    private IMajorService majorService;
 
     @ApiOperation(value = "删除成绩")
     @PostMapping("deleteScore")
@@ -95,12 +99,22 @@ public class ScoreController {
         Map<Long, String> userMap = userService.list().stream().collect(Collectors.toMap(UserPO::getUserId, UserPO::getNickName));
         Map<Long, String> courseMap = courseService.list().stream().collect(Collectors.toMap(CoursePO::getCourseId, CoursePO::getCourseName));
         Map<Long, String> paperMap = examinationPaperService.list().stream().collect(Collectors.toMap(ExaminationPaperPO::getExaminationPaperId, ExaminationPaperPO::getExaminationPaperName));
+        Map<Long, String> courseIdMap = courseService.list().stream().collect(Collectors.toMap(CoursePO::getCourseId, CoursePO::getMajorIds));
+        Map<Long, String> majorMap = majorService.list().stream().collect(Collectors.toMap(MajorPO::getMajorId, MajorPO::getMajorName));
 
         List<ScoreVO> scoreVOS = ScoreConverter.INSTANCE.convertToVO(examineeScorePOS);
         scoreVOS.forEach(t -> {
             t.setNickName(userMap.get(t.getUserId()));
             t.setCourseName(courseMap.get(t.getCourseId()));
             t.setPaperName(paperMap.get(t.getExaminationPaperId()));
+            String majorIds = courseIdMap.get(t.getCourseId());
+            String[] split = majorIds.split(",");
+            List<String> list = new ArrayList<>();
+            for (String s : split) {
+                String majorName = majorMap.get(Long.valueOf(s));
+                list.add(majorName);
+            }
+            t.setMajorsName(list.stream().collect(Collectors.joining(",")));
         });
 
         return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), scoreVOS));
