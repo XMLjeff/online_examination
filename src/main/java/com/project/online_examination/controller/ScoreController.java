@@ -80,6 +80,8 @@ public class ScoreController {
     @ApiOperationSupport(includeParameters = {"dto.courseId", "dto.examinationPaperId", "dto.nickName", "dto.score", "dto.pageNum", "dto.pageSize"})
     public ResultVO<PageInfoVO<ScoreVO>> queryQuestion(@RequestBody ScoreDTO dto) {
 
+
+
         LambdaQueryWrapper<ExamineeScorePO> wrapper = Wrappers.lambdaQuery(ExamineeScorePO.class);
         wrapper.eq(dto.getCourseId() != null, ExamineeScorePO::getCourseId, dto.getCourseId())
                 .eq(dto.getExaminationPaperId() != null, ExamineeScorePO::getExaminationPaperId, dto.getExaminationPaperId())

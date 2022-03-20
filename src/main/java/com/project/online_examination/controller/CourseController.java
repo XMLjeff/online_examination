@@ -151,8 +151,10 @@ public class CourseController {
         wrapper.like(!StringUtils.isEmpty(dto.getCourseName()), CoursePO::getCourseName, dto.getCourseName());
 
         if (!StringUtils.isEmpty(dto.getMajorIds())) {
-            wrapper.like(CoursePO::getMajorIds, dto.getMajorIds());
-            wrapper.apply("instr({0},major_ids)", dto.getMajorIds());
+            String[] split = dto.getMajorIds().split(",");
+            for (String s : split) {
+                wrapper.apply("find_in_set({0},major_ids)", s);
+            }
         }
 
         Page<CoursePO> page = courseService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper);

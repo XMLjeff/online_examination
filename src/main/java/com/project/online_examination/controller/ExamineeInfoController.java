@@ -103,8 +103,10 @@ public class ExamineeInfoController {
                 .eq(UserPO::getRole, UserConstant.ROLE_EXAMINEE);
 
         if (!StringUtils.isEmpty(dto.getMajorIds())) {
-            wrapper.like(UserPO::getMajorIds, dto.getMajorIds());
-            wrapper.apply("instr({0},major_ids)", dto.getMajorIds());
+            String[] split = dto.getMajorIds().split(",");
+            for (String s : split) {
+                wrapper.apply("find_in_set({0},major_ids)", s);
+            }
         }
 
         Page<UserPO> page = userService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper);

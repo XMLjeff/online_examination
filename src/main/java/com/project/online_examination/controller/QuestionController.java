@@ -107,8 +107,6 @@ public class QuestionController {
     @ApiOperationSupport(includeParameters = {"dto.examinationQuestionsName", "dto.examinationQuestionsCategory", "dto.examinationPaperIds", "dto.pageNum", "dto.pageSize", "dto.userId"})
     public ResultVO<PageInfoVO<ExaminationQuestionsPO>> queryQuestion(@RequestBody QuestionDTO dto) {
 
-        //select * from course where instr('1,2',major_ids) and major_ids like '%1,2%';
-
         List<Long> paperIds = null;
         if (dto.getUserId() != null) {
             List<Long> courseIds = teacherAndCourseService.list(Wrappers.lambdaQuery(TeacherAndCoursePO.class).eq(TeacherAndCoursePO::getUserId, dto.getUserId()))
@@ -126,13 +124,16 @@ public class QuestionController {
                 .eq(dto.getExaminationQuestionsCategory() != null, ExaminationQuestionsPO::getExaminationQuestionsCategory, dto.getExaminationQuestionsCategory());
 
         if (!StringUtils.isEmpty(dto.getExaminationPaperIds())) {
-            wrapper.like(ExaminationQuestionsPO::getExaminationPaperIds, dto.getExaminationPaperIds());
-            wrapper.apply("instr({0},examination_paper_ids)", dto.getExaminationPaperIds());
+            String[] split = dto.getExaminationPaperIds().split(",");
+            for (String s : split) {
+                wrapper.apply("find_in_set({0},examination_paper_ids)", s);
+            }
         }
 
         if (paperIds != null) {
-            wrapper.like(ExaminationQuestionsPO::getExaminationPaperIds, paperIds);
-            wrapper.apply("instr({0},examination_paper_ids)", paperIds);
+            for (Long paperId : paperIds) {
+                wrapper.apply("find_in_set({0},examination_paper_ids)", String.valueOf(paperId));
+            }
         }
 
         Page<ExaminationQuestionsPO> page = examinationQuestionsService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper);
