@@ -13,7 +13,7 @@ import io.swagger.annotations.ApiModelProperty;
  * </p>
  *
  * @author xmljeff
- * @since 2022-01-12
+ * @since 2022-03-20
  */
 
 @TableName("examinee_examination_paper")
@@ -25,6 +25,8 @@ public class ExamineeExaminationPaperPO implements Serializable {
      * 主键
      */
     @ApiModelProperty(value = "主键")
+    //@TableId(value = "examinee_examination_paper_id", type = IdType.ID_WORKER)
+    //private Long id;//如果是Long类型的主键.则需要IdType.ID_WORKER;它会自动使用雪花算法生成不重复的ID.在新增的时候.自动赋值
     @TableId(type = IdType.AUTO)
     private Long examineeExaminationPaperId;
     /**

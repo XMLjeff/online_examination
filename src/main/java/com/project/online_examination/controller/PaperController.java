@@ -3,7 +3,6 @@ package com.project.online_examination.controller;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
-import com.project.online_examination.constant.Constant;
 import com.project.online_examination.dto.PaperDTO;
 import com.project.online_examination.enums.MessageEnum;
 import com.project.online_examination.pojo.*;

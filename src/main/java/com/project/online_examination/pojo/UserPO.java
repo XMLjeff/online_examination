@@ -1,13 +1,9 @@
 package com.project.online_examination.pojo;
 
 import io.swagger.annotations.ApiModel;
-
 import java.time.*;
-
 import lombok.Data;
-
 import java.io.Serializable;
-
 import com.baomidou.mybatisplus.annotation.*;
 import io.swagger.annotations.ApiModelProperty;
 
@@ -17,7 +13,7 @@ import io.swagger.annotations.ApiModelProperty;
  * </p>
  *
  * @author xmljeff
- * @since 2022-01-12
+ * @since 2022-03-20
  */
 
 @TableName("user")
@@ -25,10 +21,12 @@ import io.swagger.annotations.ApiModelProperty;
 public class UserPO implements Serializable {
     private static final Long serialVersionUID = 1L;
 
-    /**
+/**
      * 主键
      */
     @ApiModelProperty(value = "主键")
+    //@TableId(value = "user_id", type = IdType.ID_WORKER)
+    //private Long id;//如果是Long类型的主键.则需要IdType.ID_WORKER;它会自动使用雪花算法生成不重复的ID.在新增的时候.自动赋值
     @TableId(type = IdType.AUTO)
     private Long userId;
     /**
@@ -52,9 +50,9 @@ public class UserPO implements Serializable {
     @ApiModelProperty(value = "性别：0：男；1：女，2：未知")
     private Integer sex;
     /**
-     * 角色：0：admin;1:管理员；2：考生
+     * 角色：0：admin;1:管理员；2：考生；3：教师
      */
-    @ApiModelProperty(value = "角色：0：admin;1:管理员；2：考生")
+    @ApiModelProperty(value = "角色：0：admin;1:管理员；2：考生；3：教师")
     private Integer role;
     /**
      * 专业id，学生属于哪个专业,可能是多个，用，分隔
@@ -65,6 +63,6 @@ public class UserPO implements Serializable {
      * 电话号码
      */
     @ApiModelProperty(value = "电话号码")
-    private String phoneNum;
-
+    private Long phoneNum;
+    
 }

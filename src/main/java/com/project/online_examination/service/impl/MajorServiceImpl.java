@@ -8,7 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 /**
  *
  * @author xmljeff
- * @since 2022-01-12
+ * @since 2022-03-20
  */
 @Service
 public class MajorServiceImpl extends ServiceImpl<MajorMapper, MajorPO> implements IMajorService {
