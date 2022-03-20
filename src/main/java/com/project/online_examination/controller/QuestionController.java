@@ -1,5 +1,6 @@
 package com.project.online_examination.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -9,8 +10,11 @@ import com.project.online_examination.mapstruct.QuestionConverter;
 import com.project.online_examination.pojo.ExaminationPaperPO;
 import com.project.online_examination.pojo.ExaminationQuestionsPO;
 import com.project.online_examination.pojo.ExamineeExaminationPaperPO;
+import com.project.online_examination.pojo.TeacherAndCoursePO;
+import com.project.online_examination.service.IExaminationPaperService;
 import com.project.online_examination.service.IExaminationQuestionsService;
 import com.project.online_examination.service.IExamineeExaminationPaperService;
+import com.project.online_examination.service.ITeacherAndCourseService;
 import com.project.online_examination.utils.UploadFile;
 import com.project.online_examination.vo.PageInfoVO;
 import com.project.online_examination.vo.ResultVO;
@@ -38,6 +42,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author ：xmljeff
@@ -56,10 +61,14 @@ public class QuestionController {
     private IExaminationQuestionsService examinationQuestionsService;
     @Autowired
     private IExamineeExaminationPaperService examineeExaminationPaperService;
+    @Autowired
+    private ITeacherAndCourseService teacherAndCourseService;
+    @Autowired
+    private IExaminationPaperService examinationPaperService;
 
     @ApiOperation(value = "新增试题")
     @PostMapping("insertQuestion")
-    @ApiOperationSupport(ignoreParameters = {"dto.examinationQuestionsId", "dto.examinationQuestionsIds", "dto.pageNum", "dto.pageSize"})
+    @ApiOperationSupport(ignoreParameters = {"dto.examinationQuestionsId", "dto.examinationQuestionsIds", "dto.pageNum", "dto.pageSize", "dto.userId"})
     public ResultVO insertQuestion(@RequestBody QuestionDTO dto) {
 
         ExaminationQuestionsPO examinationQuestionsPO = examinationQuestionsService.getOne(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
@@ -95,41 +104,46 @@ public class QuestionController {
 
     @ApiOperation(value = "查询试题")
     @PostMapping("queryQuestion")
-    @ApiOperationSupport(includeParameters = {"dto.examinationQuestionsName", "dto.examinationQuestionsCategory", "dto.examinationPaperIds", "dto.pageNum", "dto.pageSize"})
+    @ApiOperationSupport(includeParameters = {"dto.examinationQuestionsName", "dto.examinationQuestionsCategory", "dto.examinationPaperIds", "dto.pageNum", "dto.pageSize", "dto.userId"})
     public ResultVO<PageInfoVO<ExaminationQuestionsPO>> queryQuestion(@RequestBody QuestionDTO dto) {
 
-        Page<ExaminationQuestionsPO> page = examinationQuestionsService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
-                .like(!StringUtils.isEmpty(dto.getExaminationQuestionsName()), ExaminationQuestionsPO::getExaminationQuestionsName, dto.getExaminationQuestionsName())
-                .eq(dto.getExaminationQuestionsCategory() != null, ExaminationQuestionsPO::getExaminationQuestionsCategory, dto.getExaminationQuestionsCategory()));
+        //select * from course where instr('1,2',major_ids) and major_ids like '%1,2%';
 
-        List<ExaminationQuestionsPO> examinationPaperPOS = page.getRecords();
+        List<Long> paperIds = null;
+        if (dto.getUserId() != null) {
+            List<Long> courseIds = teacherAndCourseService.list(Wrappers.lambdaQuery(TeacherAndCoursePO.class).eq(TeacherAndCoursePO::getUserId, dto.getUserId()))
+                    .stream().map(t -> t.getCourseId()).collect(Collectors.toList());
+            List<ExaminationPaperPO> examinationPaperPOS = examinationPaperService.list(Wrappers.lambdaQuery(ExaminationPaperPO.class).in(ExaminationPaperPO::getCourseId, courseIds));
+            if (!CollectionUtils.isEmpty(examinationPaperPOS)) {
+                paperIds = examinationPaperPOS.stream().map(t -> t.getExaminationPaperId()).collect(Collectors.toList());
+            } else {
+                return ResultVO.ok().setData(new PageInfoVO<>(0L, null));
+            }
+        }
 
-        List<ExaminationQuestionsPO> examinationQuestionsPOList = new ArrayList<>();
+        LambdaQueryWrapper<ExaminationQuestionsPO> wrapper = Wrappers.lambdaQuery(ExaminationQuestionsPO.class);
+        wrapper.like(!StringUtils.isEmpty(dto.getExaminationQuestionsName()), ExaminationQuestionsPO::getExaminationQuestionsName, dto.getExaminationQuestionsName())
+                .eq(dto.getExaminationQuestionsCategory() != null, ExaminationQuestionsPO::getExaminationQuestionsCategory, dto.getExaminationQuestionsCategory());
 
         if (!StringUtils.isEmpty(dto.getExaminationPaperIds())) {
-
-            String[] split = dto.getExaminationPaperIds().split(",");
-            List<String> strings = Arrays.asList(split);
-
-            examinationPaperPOS.forEach(t -> {
-                String[] split1 = t.getExaminationPaperIds().split(",");
-                List<String> strings1 = Arrays.asList(split1);
-                if (strings1.containsAll(strings)) {
-                    examinationQuestionsPOList.add(t);
-                }
-            });
+            wrapper.like(ExaminationQuestionsPO::getExaminationPaperIds, dto.getExaminationPaperIds());
+            wrapper.apply("instr({0},examination_paper_ids)", dto.getExaminationPaperIds());
         }
 
-        if (!CollectionUtils.isEmpty(examinationQuestionsPOList)) {
-            return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), examinationQuestionsPOList));
-        } else {
-            return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), examinationPaperPOS));
+        if (paperIds != null) {
+            wrapper.like(ExaminationQuestionsPO::getExaminationPaperIds, paperIds);
+            wrapper.apply("instr({0},examination_paper_ids)", paperIds);
         }
+
+        Page<ExaminationQuestionsPO> page = examinationQuestionsService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper);
+
+        return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), page.getRecords()));
+
     }
 
     @ApiOperation(value = "修改试题")
     @PostMapping("editQuestion")
-    @ApiOperationSupport(ignoreParameters = {"dto.examinationQuestionsIds", "dto.pageNum", "dto.pageSize"})
+    @ApiOperationSupport(ignoreParameters = {"dto.examinationQuestionsIds", "dto.pageNum", "dto.pageSize", "dto.userId"})
     public ResultVO editQuestion(@RequestBody QuestionDTO dto) {
 
         ExaminationQuestionsPO examinationQuestionsPO = examinationQuestionsService.getOne(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)

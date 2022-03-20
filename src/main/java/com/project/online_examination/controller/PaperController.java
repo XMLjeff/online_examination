@@ -1,5 +1,6 @@
 package com.project.online_examination.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -62,10 +63,12 @@ public class PaperController {
     private ICourseService courseService;
     @Autowired
     private IMajorService majorService;
+    @Autowired
+    private ITeacherAndCourseService teacherAndCourseService;
 
     @ApiOperation(value = "新增试卷")
     @PostMapping("insertPaper")
-    @ApiOperationSupport(ignoreParameters = {"dto.examinationPaperId", "dto.examinationPaperIds", "dto.pageNum", "dto.pageSize"})
+    @ApiOperationSupport(ignoreParameters = {"dto.examinationPaperId", "dto.examinationPaperIds", "dto.pageNum", "dto.pageSize", "dto.userId"})
     public ResultVO insertPaper(@RequestBody PaperDTO dto) {
 
         ExaminationPaperPO examinationPaperPO = examinationPaperService.getOne(Wrappers.lambdaQuery(ExaminationPaperPO.class)
@@ -131,13 +134,23 @@ public class PaperController {
 
     @ApiOperation(value = "查询试卷")
     @PostMapping("queryPaper")
-    @ApiOperationSupport(includeParameters = {"dto.examinationPaperName", "dto.courseId", "dto.pageNum", "dto.pageSize"})
+    @ApiOperationSupport(includeParameters = {"dto.examinationPaperName", "dto.courseId", "dto.pageNum", "dto.pageSize", "dto.userId"})
     public ResultVO<PageInfoVO<ExaminationPaperVO>> queryPaper(@RequestBody PaperDTO dto) {
 
-        Page<ExaminationPaperPO> page = examinationPaperService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), Wrappers.lambdaQuery(ExaminationPaperPO.class)
-                .like(!StringUtils.isEmpty(dto.getExaminationPaperName()), ExaminationPaperPO::getExaminationPaperName, dto.getExaminationPaperName())
-                .eq(dto.getCourseId() != null, ExaminationPaperPO::getCourseId, dto.getCourseId()));
+        List<Long> courseIds = null;
+        if (dto.getUserId() != null) {
+            courseIds = teacherAndCourseService.list(Wrappers.lambdaQuery(TeacherAndCoursePO.class).eq(TeacherAndCoursePO::getUserId, dto.getUserId()))
+                    .stream().map(t -> t.getCourseId()).collect(Collectors.toList());
+        }
 
+        LambdaQueryWrapper<ExaminationPaperPO> wrapper = Wrappers.lambdaQuery(ExaminationPaperPO.class);
+        wrapper.like(!StringUtils.isEmpty(dto.getExaminationPaperName()), ExaminationPaperPO::getExaminationPaperName, dto.getExaminationPaperName())
+                .eq(dto.getCourseId() != null, ExaminationPaperPO::getCourseId, dto.getCourseId());
+        if (!CollectionUtils.isEmpty(courseIds)) {
+            wrapper.in(ExaminationPaperPO::getCourseId, courseIds);
+        }
+
+        Page<ExaminationPaperPO> page = examinationPaperService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper);
         List<ExaminationPaperPO> examinationPaperPOS = page.getRecords();
 
         Map<Long, String> courseMap = courseService.list().stream().collect(Collectors.toMap(CoursePO::getCourseId, CoursePO::getMajorIds));
@@ -164,7 +177,7 @@ public class PaperController {
 
     @ApiOperation(value = "修改试卷")
     @PostMapping("editPaper")
-    @ApiOperationSupport(ignoreParameters = {"dto.examinationPaperIds", "dto.pageNum", "dto.pageSize"})
+    @ApiOperationSupport(ignoreParameters = {"dto.examinationPaperIds", "dto.pageNum", "dto.pageSize", "dto.userId"})
     public ResultVO editPaper(@RequestBody PaperDTO dto) {
 
         ExaminationPaperPO examinationPaperPO = examinationPaperService.getOne(Wrappers.lambdaQuery(ExaminationPaperPO.class)

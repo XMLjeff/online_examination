@@ -19,6 +19,11 @@ import java.util.List;
 public class PaperDTO implements Serializable {
 
     /**
+     * 用户id
+     */
+    @ApiModelProperty(value = "用户id")
+    private Long userId;
+    /**
      * 多个试卷id
      */
     @ApiModelProperty(value = "多个试卷id")

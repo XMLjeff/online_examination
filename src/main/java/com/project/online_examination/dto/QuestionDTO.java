@@ -19,6 +19,11 @@ import java.util.List;
 public class QuestionDTO implements Serializable {
 
     /**
+     * 用户id
+     */
+    @ApiModelProperty(value = "用户id")
+    private Long userId;
+    /**
      * 多个试题id
      */
     @ApiModelProperty(value = "多个试题id")

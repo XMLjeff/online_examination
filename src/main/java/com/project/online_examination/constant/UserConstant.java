@@ -15,6 +15,8 @@ public class UserConstant {
     public static final int ROLE_MANAGER = 1;
     //考生
     public static final int ROLE_EXAMINEE = 2;
+    //教师
+    public static final int ROLE_TEACHER = 3;
     //重置之后的默认密码
     public static final String DEFAULT_PASSWORD = "123456";
 }

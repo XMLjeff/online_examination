@@ -1,14 +1,13 @@
 package com.project.online_examination.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
-import com.project.online_examination.dto.QuestionDTO;
 import com.project.online_examination.dto.ScoreDTO;
 import com.project.online_examination.mapstruct.ScoreConverter;
 import com.project.online_examination.pojo.*;
 import com.project.online_examination.service.*;
-import com.project.online_examination.vo.ExaminationPaperVO;
 import com.project.online_examination.vo.PageInfoVO;
 import com.project.online_examination.vo.ResultVO;
 import com.project.online_examination.vo.ScoreVO;
@@ -81,20 +80,28 @@ public class ScoreController {
     @ApiOperationSupport(includeParameters = {"dto.courseId", "dto.examinationPaperId", "dto.nickName", "dto.score", "dto.pageNum", "dto.pageSize"})
     public ResultVO<PageInfoVO<ScoreVO>> queryQuestion(@RequestBody ScoreDTO dto) {
 
-        Page<ExamineeScorePO> page = examineeScoreService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), Wrappers.lambdaQuery(ExamineeScorePO.class)
-                .eq(dto.getCourseId() != null, ExamineeScorePO::getCourseId, dto.getCourseId())
+        LambdaQueryWrapper<ExamineeScorePO> wrapper = Wrappers.lambdaQuery(ExamineeScorePO.class);
+        wrapper.eq(dto.getCourseId() != null, ExamineeScorePO::getCourseId, dto.getCourseId())
                 .eq(dto.getExaminationPaperId() != null, ExamineeScorePO::getExaminationPaperId, dto.getExaminationPaperId())
-                .eq(dto.getScore() != null, ExamineeScorePO::getScore, dto.getScore()));
+                .eq(dto.getScore() != null, ExamineeScorePO::getScore, dto.getScore());
 
-        List<ExamineeScorePO> examineeScorePOS = page.getRecords();
-
+        List<Long> userIds = null;
         if (!StringUtils.isEmpty(dto.getNickName())) {
             List<UserPO> list = userService.list(Wrappers.lambdaQuery(UserPO.class).like(UserPO::getNickName, dto.getNickName()));
             if (!CollectionUtils.isEmpty(list)) {
-                List<Long> userIds = list.stream().map(t -> t.getUserId()).collect(Collectors.toList());
-                examineeScorePOS = examineeScorePOS.stream().filter(t -> userIds.contains(t.getUserId())).collect(Collectors.toList());
+                userIds = list.stream().map(t -> t.getUserId()).collect(Collectors.toList());
+            } else {
+                return ResultVO.ok().setData(new PageInfoVO<>(0L, null));
             }
         }
+
+        if (!CollectionUtils.isEmpty(userIds)) {
+            wrapper.in(ExamineeScorePO::getUserId, userIds);
+        }
+
+        Page<ExamineeScorePO> page = examineeScoreService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper);
+
+        List<ExamineeScorePO> examineeScorePOS = page.getRecords();
 
         Map<Long, String> userMap = userService.list().stream().collect(Collectors.toMap(UserPO::getUserId, UserPO::getNickName));
         Map<Long, String> courseMap = courseService.list().stream().collect(Collectors.toMap(CoursePO::getCourseId, CoursePO::getCourseName));

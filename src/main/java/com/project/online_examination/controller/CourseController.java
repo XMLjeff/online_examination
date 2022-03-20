@@ -1,5 +1,6 @@
 package com.project.online_examination.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -145,32 +146,19 @@ public class CourseController {
     @ApiOperationSupport(includeParameters = {"dto.courseName", "dto.majorIds", "dto.pageNum", "dto.pageSize"})
     public ResultVO<PageInfoVO<CoursePO>> queryCourse(@RequestBody CourseDTO dto) {
 
-        Page<CoursePO> page = courseService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), Wrappers.lambdaQuery(CoursePO.class)
-                .like(!StringUtils.isEmpty(dto.getCourseName()), CoursePO::getCourseName, dto.getCourseName()));
+        LambdaQueryWrapper<CoursePO> wrapper = Wrappers.lambdaQuery(CoursePO.class);
 
-        List<CoursePO> coursePOS = page.getRecords();
-
-        List<CoursePO> coursePOList = new ArrayList<>();
+        wrapper.like(!StringUtils.isEmpty(dto.getCourseName()), CoursePO::getCourseName, dto.getCourseName());
 
         if (!StringUtils.isEmpty(dto.getMajorIds())) {
-
-            String[] split1 = dto.getMajorIds().split(",");
-            List<String> strings1 = Arrays.asList(split1);
-
-            coursePOS.forEach(t -> {
-                String[] split = t.getMajorIds().split(",");
-                List<String> strings = Arrays.asList(split);
-                if (strings.containsAll(strings1)) {
-                    coursePOList.add(t);
-                }
-            });
+            wrapper.like(CoursePO::getMajorIds, dto.getMajorIds());
+            wrapper.apply("instr({0},major_ids)", dto.getMajorIds());
         }
 
-        if (!CollectionUtils.isEmpty(coursePOList)) {
-            return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), coursePOList));
-        } else {
-            return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), coursePOS));
-        }
+        Page<CoursePO> page = courseService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper);
+
+        return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), page.getRecords()));
+
     }
 
     @ApiOperation(value = "修改课程")

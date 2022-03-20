@@ -11,5 +11,8 @@ spring:
 knife4j:
   enable: true
 logging:
-  pattern:
-    level: debug
+  level:
+    com:
+      project:
+        online_examination:
+          mapper: debug #打印sql

@@ -1,5 +1,6 @@
 package com.project.online_examination.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
@@ -96,34 +97,20 @@ public class ExamineeInfoController {
     @ApiOperationSupport(includeParameters = {"dto.nickName", "dto.sex", "dto.majorIds", "dto.pageNum", "dto.pageSize"})
     public ResultVO<PageInfoVO<UserPO>> queryExaminee(@RequestBody UserDTO dto) {
 
-        Page<UserPO> page = userService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), Wrappers.lambdaQuery(UserPO.class)
-                .like(!StringUtils.isEmpty(dto.getNickName()), UserPO::getNickName, dto.getNickName())
+        LambdaQueryWrapper<UserPO> wrapper = Wrappers.lambdaQuery(UserPO.class);
+        wrapper.like(!StringUtils.isEmpty(dto.getNickName()), UserPO::getNickName, dto.getNickName())
                 .eq(dto.getSex() != null, UserPO::getSex, dto.getSex())
-                .eq(UserPO::getRole, UserConstant.ROLE_EXAMINEE));
-
-        List<UserPO> userPOS = page.getRecords();
-
-        List<UserPO> userPOList = new ArrayList<>();
+                .eq(UserPO::getRole, UserConstant.ROLE_EXAMINEE);
 
         if (!StringUtils.isEmpty(dto.getMajorIds())) {
-
-            String[] split = dto.getMajorIds().split(",");
-            List<String> strings = Arrays.asList(split);
-
-            userPOS.forEach(t -> {
-                String[] split1 = t.getMajorIds().split(",");
-                List<String> strings1 = Arrays.asList(split1);
-                if (strings1.containsAll(strings)) {
-                    userPOList.add(t);
-                }
-            });
+            wrapper.like(UserPO::getMajorIds, dto.getMajorIds());
+            wrapper.apply("instr({0},major_ids)", dto.getMajorIds());
         }
 
-        if (!CollectionUtils.isEmpty(userPOList)) {
-            return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), userPOList));
-        } else {
-            return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), userPOS));
-        }
+        Page<UserPO> page = userService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper);
+
+        return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), page.getRecords()));
+
     }
 
     @ApiOperation(value = "修改考生")
