@@ -112,8 +112,13 @@ public class ExamController {
 
         examineeExaminationPaperService.saveBatch(examineeExaminationPaperPOS);
 
-        //所有的试题
-        List<ExaminationQuestionsPO> examinationQuestionsPOS = examinationQuestionsService.list();
+        //得到除填空题和简答题的试题
+        List<ExaminationQuestionsPO> examinationQuestionsPOS = examinationQuestionsService.list(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
+                .eq(ExaminationQuestionsPO::getExaminationQuestionsCategory, 1)
+                .or()
+                .eq(ExaminationQuestionsPO::getExaminationQuestionsCategory, 2)
+                .or()
+                .eq(ExaminationQuestionsPO::getExaminationQuestionsCategory, 3));
 
         //得到试题和对应的答案
         Map<Long, String> answerMap = examinationQuestionsPOS.stream()
@@ -159,7 +164,7 @@ public class ExamController {
         for (ExamineeScorePO examineeScorePO : examineeScorePOS) {
             ExamScoreVO examScoreVO = new ExamScoreVO();
             examScoreVO.setCourseName(courseMap.get(examineeScorePO.getCourseId()));
-            examScoreVO.setScore(examineeScorePO.getScore());
+            examScoreVO.setFinalScore(examineeScorePO.getFinalSocre());
             examScoreVOS.add(examScoreVO);
         }
 

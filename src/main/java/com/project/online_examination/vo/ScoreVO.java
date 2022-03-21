@@ -1,5 +1,7 @@
 package com.project.online_examination.vo;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.project.online_examination.pojo.ExamineeScorePO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -14,8 +16,33 @@ import java.io.Serializable;
  * @version: $
  */
 @Data
-public class ScoreVO extends ExamineeScorePO implements Serializable {
+public class ScoreVO implements Serializable {
 
+    /**
+     * 主键
+     */
+    @ApiModelProperty(value = "主键")
+    private Long examineeScoreId;
+    /**
+     * 考生id
+     */
+    @ApiModelProperty(value = "考生id")
+    private Long userId;
+    /**
+     * 课程id
+     */
+    @ApiModelProperty(value = "课程id")
+    private Long courseId;
+    /**
+     * 试卷id
+     */
+    @ApiModelProperty(value = "试卷id")
+    private Long examinationPaperId;
+    /**
+     * 最终成绩
+     */
+    @ApiModelProperty(value = "最终成绩")
+    private Integer finalSocre;
     @ApiModelProperty(value = "考生昵称")
     private String nickName;
     @ApiModelProperty(value = "课程名称")

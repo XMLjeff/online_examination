@@ -16,6 +16,6 @@ public class ExamScoreVO {
     @ApiModelProperty(value = "课程名称")
     private String courseName;
 
-    @ApiModelProperty(value = "成绩")
-    private int score;
+    @ApiModelProperty(value = "最终成绩")
+    private int finalScore;
 }

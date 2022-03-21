@@ -5,10 +5,12 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import com.project.online_examination.dto.ScoreDTO;
+import com.project.online_examination.mapstruct.QuestionConverter;
 import com.project.online_examination.mapstruct.ScoreConverter;
 import com.project.online_examination.pojo.*;
 import com.project.online_examination.service.*;
 import com.project.online_examination.vo.PageInfoVO;
+import com.project.online_examination.vo.QuestionVO;
 import com.project.online_examination.vo.ResultVO;
 import com.project.online_examination.vo.ScoreVO;
 import io.swagger.annotations.Api;
@@ -52,12 +54,16 @@ public class ScoreController {
     private IExaminationPaperService examinationPaperService;
     @Autowired
     private IMajorService majorService;
+    @Autowired
+    private ITeacherAndCourseService teacherAndCourseService;
+    @Autowired
+    private IExaminationQuestionsService examinationQuestionsService;
 
     @ApiOperation(value = "删除成绩")
     @PostMapping("deleteScore")
     @ApiOperationSupport(includeParameters = {"dto.examineeScoreIds"})
     @Transactional
-    public ResultVO deleteQuestion(@RequestBody ScoreDTO dto) {
+    public ResultVO deleteScore(@RequestBody ScoreDTO dto) {
 
         //得到需要删除的成绩
         List<ExamineeScorePO> examineeScorePOS = examineeScoreService.list(Wrappers.lambdaQuery(ExamineeScorePO.class)
@@ -77,15 +83,19 @@ public class ScoreController {
 
     @ApiOperation(value = "查询成绩")
     @PostMapping("queryScore")
-    @ApiOperationSupport(includeParameters = {"dto.courseId", "dto.examinationPaperId", "dto.nickName", "dto.score", "dto.pageNum", "dto.pageSize"})
-    public ResultVO<PageInfoVO<ScoreVO>> queryQuestion(@RequestBody ScoreDTO dto) {
+    @ApiOperationSupport(includeParameters = {"dto.courseId", "dto.examinationPaperId", "dto.nickName", "dto.score", "dto.pageNum", "dto.pageSize", "dto.teacherId"})
+    public ResultVO<PageInfoVO<ScoreVO>> queryScore(@RequestBody ScoreDTO dto) {
 
-
+        List<Long> courseIds = null;
+        if (dto.getTeacherId() != null) {
+            List<TeacherAndCoursePO> teacherAndCoursePOS = teacherAndCourseService.list(Wrappers.lambdaQuery(TeacherAndCoursePO.class).eq(TeacherAndCoursePO::getUserId, dto.getTeacherId()));
+            courseIds = teacherAndCoursePOS.stream().map(t -> t.getCourseId()).collect(Collectors.toList());
+        }
 
         LambdaQueryWrapper<ExamineeScorePO> wrapper = Wrappers.lambdaQuery(ExamineeScorePO.class);
         wrapper.eq(dto.getCourseId() != null, ExamineeScorePO::getCourseId, dto.getCourseId())
                 .eq(dto.getExaminationPaperId() != null, ExamineeScorePO::getExaminationPaperId, dto.getExaminationPaperId())
-                .eq(dto.getScore() != null, ExamineeScorePO::getScore, dto.getScore());
+                .eq(dto.getFinalScore() != null, ExamineeScorePO::getFinalSocre, dto.getFinalScore());
 
         List<Long> userIds = null;
         if (!StringUtils.isEmpty(dto.getNickName())) {
@@ -99,6 +109,10 @@ public class ScoreController {
 
         if (!CollectionUtils.isEmpty(userIds)) {
             wrapper.in(ExamineeScorePO::getUserId, userIds);
+        }
+
+        if (!CollectionUtils.isEmpty(courseIds)) {
+            wrapper.in(ExamineeScorePO::getCourseId, courseIds);
         }
 
         Page<ExamineeScorePO> page = examineeScoreService.page(new Page<>(dto.getPageNum(), dto.getPageSize()), wrapper);
@@ -127,5 +141,62 @@ public class ScoreController {
         });
 
         return ResultVO.ok().setData(new PageInfoVO<>(page.getTotal(), scoreVOS));
+    }
+
+    @ApiOperation(value = "修改成绩")
+    @PostMapping("editScore")
+    @ApiOperationSupport(includeParameters = {"dto.examineeScoreId", "dto.finalScore"})
+    @Transactional
+    public ResultVO editScore(@RequestBody ScoreDTO dto) {
+
+        ExamineeScorePO examineeScorePO = new ExamineeScorePO();
+        examineeScorePO.setExaminationPaperId(dto.getExaminationPaperId());
+        examineeScorePO.setFinalSocre(dto.getFinalScore());
+
+        examineeScoreService.updateById(examineeScorePO);
+
+        return ResultVO.ok();
+    }
+
+    @ApiOperation(value = "得到考生试卷中的填空题和简答题")
+    @PostMapping("getQuestion")
+    @ApiOperationSupport(includeParameters = {"dto.courseId", "dto.examinationPaperId", "dto.userId"})
+    @Transactional
+    public ResultVO<List<QuestionVO>> getQuestion(@RequestBody ScoreDTO dto) {
+
+        List<ExamineeExaminationPaperPO> examineeExaminationPaperPOS = examineeExaminationPaperService.list(Wrappers.lambdaQuery(ExamineeExaminationPaperPO.class)
+                .eq(ExamineeExaminationPaperPO::getCourseId, dto.getCourseId())
+                .eq(ExamineeExaminationPaperPO::getExaminationPaperId, dto.getExaminationPaperId())
+                .eq(ExamineeExaminationPaperPO::getUserId, dto.getUserId()));
+
+        List<ExaminationQuestionsPO> examinationQuestionsPOS = examinationQuestionsService.list(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
+                .in(ExaminationQuestionsPO::getExaminationQuestionsId, examineeExaminationPaperPOS.stream().map(t -> t.getExaminationQuestionsId()))
+                .and(wrapper -> {
+                    wrapper.eq(ExaminationQuestionsPO::getExaminationQuestionsCategory, 4)
+                            .or()
+                            .eq(ExaminationQuestionsPO::getExaminationQuestionsCategory, 5);
+                }));
+
+        Map<Long, String> answerMap = examineeExaminationPaperPOS.stream().collect(Collectors.toMap(ExamineeExaminationPaperPO::getExaminationQuestionsId, ExamineeExaminationPaperPO::getExamineeAnswer));
+
+        List<QuestionVO> questionVOS = QuestionConverter.INSTANCE.convertToVO(examinationQuestionsPOS);
+
+        questionVOS.forEach(t -> t.setExamineeAnswer(answerMap.get(t.getExaminationQuestionsId())));
+
+        return ResultVO.ok().setData(questionVOS);
+    }
+
+    @ApiOperation(value = "教师阅卷，提交填空题和简答题的分数")
+    @PostMapping("commit")
+    @ApiOperationSupport(includeParameters = {"dto.examineeScoreId", "dto.score"})
+    @Transactional
+    public ResultVO commit(@RequestBody ScoreDTO dto) {
+
+        ExamineeScorePO examineeScorePO = examineeScoreService.getById(dto.getExamineeScoreId());
+        examineeScorePO.setFinalSocre(examineeScorePO.getScore() + dto.getScore());
+
+        examineeScoreService.updateById(examineeScorePO);
+
+        return ResultVO.ok();
     }
 }

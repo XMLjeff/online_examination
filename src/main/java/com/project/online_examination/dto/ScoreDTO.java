@@ -30,6 +30,11 @@ public class ScoreDTO implements Serializable {
     @ApiModelProperty(value = "主键")
     private Long examineeScoreId;
     /**
+     * 教师id
+     */
+    @ApiModelProperty(value = "教师id")
+    private Long teacherId;
+    /**
      * 考生id
      */
     @ApiModelProperty(value = "考生id")
@@ -45,9 +50,14 @@ public class ScoreDTO implements Serializable {
     @ApiModelProperty(value = "试卷id")
     private Long examinationPaperId;
     /**
-     * 成绩
+     * 最终成绩
      */
-    @ApiModelProperty(value = "成绩")
+    @ApiModelProperty(value = "最终成绩")
+    private Integer finalScore;
+    /**
+     * 填空题和简答题的成绩
+     */
+    @ApiModelProperty(value = "填空题和简答题的成绩")
     private Integer score;
 
     @ApiModelProperty(value = "考生昵称")

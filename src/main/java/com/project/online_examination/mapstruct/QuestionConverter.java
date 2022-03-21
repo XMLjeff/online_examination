@@ -2,9 +2,12 @@ package com.project.online_examination.mapstruct;
 
 import com.project.online_examination.dto.QuestionDTO;
 import com.project.online_examination.pojo.ExaminationQuestionsPO;
+import com.project.online_examination.vo.QuestionVO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
+
+import java.util.List;
 
 /**
  * @author ：xmljeff
@@ -19,4 +22,7 @@ public interface QuestionConverter {
 
     @Mappings({})
     ExaminationQuestionsPO convertToPO(QuestionDTO dto);
+
+    @Mappings({})
+    List<QuestionVO> convertToVO(List<ExaminationQuestionsPO> po);
 }
