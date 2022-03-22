@@ -11,10 +11,12 @@ import com.project.online_examination.enums.MessageEnum;
 import com.project.online_examination.mapstruct.UserConverter;
 import com.project.online_examination.pojo.*;
 import com.project.online_examination.service.ICourseService;
+import com.project.online_examination.service.IExaminationPaperService;
 import com.project.online_examination.service.ITeacherAndCourseService;
 import com.project.online_examination.service.IUserService;
 import com.project.online_examination.vo.PageInfoVO;
 import com.project.online_examination.vo.ResultVO;
+import com.project.online_examination.vo.TeacherAndCourseVO;
 import com.project.online_examination.vo.TeacherVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -52,6 +54,8 @@ public class TeacherController {
     private ITeacherAndCourseService teacherAndCourseService;
     @Autowired
     private ICourseService courseService;
+    @Autowired
+    private IExaminationPaperService examinationPaperService;
 
     @ApiOperation(value = "新增教师")
     @PostMapping("insertTeacher")
@@ -139,11 +143,31 @@ public class TeacherController {
     @ApiOperation(value = "得到某个教师的所有课程")
     @PostMapping("getTeacherAllCourse")
     @ApiOperationSupport(includeParameters = {"dto.userId"})
-    public ResultVO<List<TeacherAndCoursePO>> getTeacherAllCourse(TeacherDTO dto) {
+    public ResultVO<List<TeacherAndCourseVO>> getTeacherAllCourse(@RequestBody TeacherDTO dto) {
 
         List<TeacherAndCoursePO> teacherAndCoursePOS = teacherAndCourseService.list(Wrappers.lambdaQuery(TeacherAndCoursePO.class).eq(TeacherAndCoursePO::getUserId, dto.getUserId()));
+        Map<Long, String> courseNameMap = courseService.list().stream().collect(Collectors.toMap(CoursePO::getCourseId, CoursePO::getCourseName));
 
-        return ResultVO.ok().setData(teacherAndCoursePOS);
+        List<TeacherAndCourseVO> teacherAndCourseVOS = new ArrayList<>();
+        for (TeacherAndCoursePO teacherAndCoursePO : teacherAndCoursePOS) {
+            TeacherAndCourseVO teacherAndCourseVO = new TeacherAndCourseVO();
+            teacherAndCourseVO.setCourseId(teacherAndCoursePO.getCourseId());
+            teacherAndCourseVO.setCourseName(courseNameMap.get(teacherAndCoursePO.getCourseId()));
+            teacherAndCourseVO.setUserId(teacherAndCoursePO.getUserId());
+            teacherAndCourseVOS.add(teacherAndCourseVO);
+        }
+
+        return ResultVO.ok().setData(teacherAndCourseVOS);
+    }
+
+    @ApiOperation(value = "通过课程得到试卷")
+    @PostMapping("getPaperByCourse")
+    @ApiOperationSupport(includeParameters = {"dto.courseId"})
+    public ResultVO<List<ExaminationPaperPO>> getPaperByCourse(@RequestBody TeacherDTO dto) {
+
+        List<ExaminationPaperPO> examinationPaperPOS = examinationPaperService.list(Wrappers.lambdaQuery(ExaminationPaperPO.class).eq(ExaminationPaperPO::getCourseId, dto.getCourseId()));
+
+        return ResultVO.ok().setData(examinationPaperPOS);
     }
 
     @ApiOperation(value = "修改教师")
