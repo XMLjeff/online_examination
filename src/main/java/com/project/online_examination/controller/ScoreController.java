@@ -83,7 +83,7 @@ public class ScoreController {
 
     @ApiOperation(value = "查询成绩")
     @PostMapping("queryScore")
-    @ApiOperationSupport(includeParameters = {"dto.courseId", "dto.examinationPaperId", "dto.nickName", "dto.score", "dto.pageNum", "dto.pageSize", "dto.teacherId"})
+    @ApiOperationSupport(includeParameters = {"dto.courseId", "dto.examinationPaperId", "dto.nickName", "dto.finalScore", "dto.pageNum", "dto.pageSize", "dto.teacherId"})
     public ResultVO<PageInfoVO<ScoreVO>> queryScore(@RequestBody ScoreDTO dto) {
 
         List<Long> courseIds = null;

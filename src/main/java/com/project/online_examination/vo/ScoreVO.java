@@ -42,7 +42,7 @@ public class ScoreVO implements Serializable {
      * 最终成绩
      */
     @ApiModelProperty(value = "最终成绩")
-    private Integer finalSocre;
+    private Integer finalScore;
     @ApiModelProperty(value = "考生昵称")
     private String nickName;
     @ApiModelProperty(value = "课程名称")
