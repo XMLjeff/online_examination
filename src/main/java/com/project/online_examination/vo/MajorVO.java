@@ -3,6 +3,8 @@ package com.project.online_examination.vo;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @author ：xmljeff
  * @date ：Created in 2022/1/21 21:56
@@ -11,7 +13,7 @@ import lombok.Data;
  * @version: $
  */
 @Data
-public class MajorVO {
+public class MajorVO implements Serializable {
 
     /**
      * 专业id

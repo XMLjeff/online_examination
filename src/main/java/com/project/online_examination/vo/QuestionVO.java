@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
+import java.io.Serializable;
+
 /**
  * @author ：xmljeff
  * @date ：Created in 2022/3/21 22:38
@@ -13,7 +15,7 @@ import lombok.Data;
  * @version: $
  */
 @Data
-public class QuestionVO {
+public class QuestionVO implements Serializable {
 
     /**
      * 试题id

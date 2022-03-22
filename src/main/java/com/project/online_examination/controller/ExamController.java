@@ -136,13 +136,31 @@ public class ExamController {
             }
         }
 
-        ExamineeScorePO examineeScorePO = new ExamineeScorePO();
-        examineeScorePO.setExaminationPaperId(dtos.get(0).getExaminationPaperId());
-        examineeScorePO.setCourseId(dtos.get(0).getCourseId());
-        examineeScorePO.setScore(totalScore);
-        examineeScorePO.setUserId(userId);
+        List<Long> questionIds = dtos.stream().map(t -> t.getExaminationQuestionsId()).collect(Collectors.toList());
+        List<ExaminationQuestionsPO> examinationQuestionsPOList = examinationQuestionsService.list(Wrappers.lambdaQuery(ExaminationQuestionsPO.class).in(ExaminationQuestionsPO::getExaminationQuestionsId, questionIds));
+        //判断是否存在填空题或简答题
+        boolean anyMatch = examinationQuestionsPOList.stream().anyMatch(t -> t.getExaminationQuestionsCategory().equals(4) || t.getExaminationQuestionsCategory().equals(5));
+        //存在
+        if (anyMatch) {
+            ExamineeScorePO examineeScorePO = new ExamineeScorePO();
+            examineeScorePO.setExaminationPaperId(dtos.get(0).getExaminationPaperId());
+            examineeScorePO.setCourseId(dtos.get(0).getCourseId());
+            examineeScorePO.setScore(totalScore);
+            examineeScorePO.setUserId(userId);
 
-        examineeScoreService.save(examineeScorePO);
+            examineeScoreService.save(examineeScorePO);
+        } else {
+            //不存在
+            ExamineeScorePO examineeScorePO = new ExamineeScorePO();
+            examineeScorePO.setExaminationPaperId(dtos.get(0).getExaminationPaperId());
+            examineeScorePO.setCourseId(dtos.get(0).getCourseId());
+            examineeScorePO.setScore(totalScore);
+            examineeScorePO.setFinalScore(totalScore);
+            examineeScorePO.setUserId(userId);
+
+            examineeScoreService.save(examineeScorePO);
+        }
+
 
         return ResultVO.ok();
     }
@@ -164,7 +182,7 @@ public class ExamController {
         for (ExamineeScorePO examineeScorePO : examineeScorePOS) {
             ExamScoreVO examScoreVO = new ExamScoreVO();
             examScoreVO.setCourseName(courseMap.get(examineeScorePO.getCourseId()));
-            examScoreVO.setFinalScore(examineeScorePO.getFinalSocre());
+            examScoreVO.setFinalScore(examineeScorePO.getFinalScore());
             examScoreVOS.add(examScoreVO);
         }
 

@@ -1,8 +1,5 @@
 package com.project.online_examination.vo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.project.online_examination.pojo.ExamineeScorePO;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 

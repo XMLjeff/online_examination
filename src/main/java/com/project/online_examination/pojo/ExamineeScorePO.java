@@ -53,6 +53,6 @@ public class ExamineeScorePO implements Serializable {
      * 最终成绩
      */
     @ApiModelProperty(value = "最终成绩")
-    private Integer finalSocre;
+    private Integer finalScore;
     
 }

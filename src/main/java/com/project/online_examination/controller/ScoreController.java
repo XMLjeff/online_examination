@@ -95,7 +95,7 @@ public class ScoreController {
         LambdaQueryWrapper<ExamineeScorePO> wrapper = Wrappers.lambdaQuery(ExamineeScorePO.class);
         wrapper.eq(dto.getCourseId() != null, ExamineeScorePO::getCourseId, dto.getCourseId())
                 .eq(dto.getExaminationPaperId() != null, ExamineeScorePO::getExaminationPaperId, dto.getExaminationPaperId())
-                .eq(dto.getFinalScore() != null, ExamineeScorePO::getFinalSocre, dto.getFinalScore());
+                .eq(dto.getFinalScore() != null, ExamineeScorePO::getFinalScore, dto.getFinalScore());
 
         List<Long> userIds = null;
         if (!StringUtils.isEmpty(dto.getNickName())) {
@@ -151,7 +151,7 @@ public class ScoreController {
 
         ExamineeScorePO examineeScorePO = new ExamineeScorePO();
         examineeScorePO.setExaminationPaperId(dto.getExaminationPaperId());
-        examineeScorePO.setFinalSocre(dto.getFinalScore());
+        examineeScorePO.setFinalScore(dto.getFinalScore());
 
         examineeScoreService.updateById(examineeScorePO);
 
@@ -170,7 +170,7 @@ public class ScoreController {
                 .eq(ExamineeExaminationPaperPO::getUserId, dto.getUserId()));
 
         List<ExaminationQuestionsPO> examinationQuestionsPOS = examinationQuestionsService.list(Wrappers.lambdaQuery(ExaminationQuestionsPO.class)
-                .in(ExaminationQuestionsPO::getExaminationQuestionsId, examineeExaminationPaperPOS.stream().map(t -> t.getExaminationQuestionsId()))
+                .in(ExaminationQuestionsPO::getExaminationQuestionsId, examineeExaminationPaperPOS.stream().map(t -> t.getExaminationQuestionsId()).collect(Collectors.toList()))
                 .and(wrapper -> {
                     wrapper.eq(ExaminationQuestionsPO::getExaminationQuestionsCategory, 4)
                             .or()
@@ -193,7 +193,7 @@ public class ScoreController {
     public ResultVO commit(@RequestBody ScoreDTO dto) {
 
         ExamineeScorePO examineeScorePO = examineeScoreService.getById(dto.getExamineeScoreId());
-        examineeScorePO.setFinalSocre(examineeScorePO.getScore() + dto.getScore());
+        examineeScorePO.setFinalScore(examineeScorePO.getScore() + dto.getScore());
 
         examineeScoreService.updateById(examineeScorePO);
 
