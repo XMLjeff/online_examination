@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -177,7 +178,10 @@ public class ScoreController {
                             .eq(ExaminationQuestionsPO::getExaminationQuestionsCategory, 5);
                 }));
 
-        Map<Long, String> answerMap = examineeExaminationPaperPOS.stream().collect(Collectors.toMap(ExamineeExaminationPaperPO::getExaminationQuestionsId, ExamineeExaminationPaperPO::getExamineeAnswer));
+        Map<Long, String> answerMap = new HashMap<>();
+        for (ExamineeExaminationPaperPO examineeExaminationPaperPO : examineeExaminationPaperPOS) {
+            answerMap.put(examineeExaminationPaperPO.getExaminationQuestionsId(), String.valueOf(examineeExaminationPaperPO.getExamineeAnswer()));
+        }
 
         List<QuestionVO> questionVOS = QuestionConverter.INSTANCE.convertToVO(examinationQuestionsPOS);
 
