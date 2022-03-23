@@ -125,7 +125,7 @@ public class CourseController {
                         //去除一个试题多个试卷中对应的试卷id
                         examinationQuestionsPOS.forEach(v -> {
                             String[] paperIds = v.getExaminationPaperIds().split(",");
-                            List<String> paperIdList = Arrays.asList(paperIds);
+                            List<String> paperIdList = new ArrayList<>(Arrays.asList(paperIds));
                             paperIdList.remove(String.valueOf(examinationPaperId));
                             String paperIdss = paperIdList.stream().collect(Collectors.joining(","));
                             v.setExaminationPaperIds(paperIdss);

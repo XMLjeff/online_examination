@@ -131,7 +131,7 @@ public class MajorController {
                             //去除一个试题多个试卷中对应的试卷id
                             examinationQuestionsPOS.forEach(v -> {
                                 String[] paperIds = v.getExaminationPaperIds().split(",");
-                                List<String> paperIdList = Arrays.asList(paperIds);
+                                List<String> paperIdList = new ArrayList<>(Arrays.asList(paperIds));
                                 paperIdList.remove(String.valueOf(examinationPaperId));
                                 String paperIdss = paperIdList.stream().collect(Collectors.joining(","));
                                 v.setExaminationPaperIds(paperIdss);
@@ -149,7 +149,7 @@ public class MajorController {
                 //去除一个课程多个专业中对应的专业id
                 coursePOS.forEach(t -> {
                     String[] majorIds = t.getMajorIds().split(",");
-                    List<String> majorIdList = Arrays.asList(majorIds);
+                    List<String> majorIdList = new ArrayList<>(Arrays.asList(majorIds));
                     majorIdList.remove(String.valueOf(majorId));
                     String majorIdss = majorIdList.stream().collect(Collectors.joining(","));
                     t.setMajorIds(majorIdss);
